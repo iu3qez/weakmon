@@ -63,7 +63,7 @@ phase_gran = 100 # phase_drift() precision -- pi/phase_gran
 already_o = 1
 already_f = 1
 down200 = False # process1() that down-converts to 200 hz / 32 samples/symbol
-snr_type = 1 # 0 original WSJT-X style, 1 new, "absolute" SNR useful for antenna comparisons
+snr_type = 1 # IS0KYB: 0 original WSJT-X style, 1 new, "absolute" SNR useful for antenna comparisons
 
 # FT8 modulation and protocol definitions.
 # 1920-point FFT at 12000 samples/second
@@ -3149,7 +3149,7 @@ class FT8:
         # correction (down from 0.2 typically).
         #hz += pd[1]
         if snr_type == 0:
-           snr = self.snr(abs(m79complex))
+           snr = self.snr_original(abs(m79complex))
         elif snr_type == 1:
            snr = self.snr_is0kyb(abs(m79complex), xf)
 
