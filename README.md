@@ -1,14 +1,19 @@
 # PS: IS0KYB fork to implement a new SNR computation method
-I added a new snr computation function to use as noise not the bins adjacent
-the the signal of interest but a fixed reference for all. This fixed reference
-is found by using the existing function to find the cleanest frequency
-within the spectrum to possibly transmit.
+I added a new SNR computation function that uses as noise reference not the bins adjacent
+to the signal of interest, but a fixed reference for all. This noise reference
+is found by using the existing function to locate the cleanest frequency
+to transmit within the whole spectrum.
 Motivation: Since I'm experimenting on antenna pattern extraction/comparison,
-I observed an issue when switching to an antenna with much more gain:
-since the received signals are much more, the SNR sometimes was getting worse
-for some signals. This is perfectly normal in a "FT8 sense" since nearby stuff
+I observed an issue when switching to an antenna with much more gain from an omnidirectional one:
+since the received signals are many more, the SNR was often getting worse
+for some signals instead of better. This is perfectly normal in a "FT8 sense" since nearby stuff
 hinders decoding, but I just need to measure how the signal power relative to
 background noise behaves when changing antenna/receive setup.
+The idea assumes that the background noise is quite flat with no spurs
+for all antennas used in each test.
+If you want to know more about this: https://github.com/mcogoni/APET
+
+73, marco / IS0KYB
 
 # weakmon
 
