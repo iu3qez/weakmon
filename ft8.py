@@ -34,17 +34,17 @@ import ctypes
 #
 # tuning parameters.
 #
-budget = 2 # max seconds of time for decoding.
+budget = 10 # max seconds of time for decoding.
 coarse_fstep = 2 # coarse search granularity, per FFT bin
 coarse_tstep = 4 # coarse search granularity, per symbol time
-coarse_tminus = 1.5 # start search this many seconds before 0.5
-coarse_tplus = 1.6 # end search this many seconds after 0.5
-coarse_no    = 1 # number of best offsets to use per hz
+coarse_tminus = 2.5 # start search this many seconds before 0.5
+coarse_tplus = 2.6 # end search this many seconds after 0.5
+coarse_no    = 2 # number of best offsets to use per hz
 fine_no    = 1 # number of best fine offsets to look at
 fine_fstep = 2 # fine-tuning steps per coarse_fstep
 fine_tstep = 4 # fine-tuning steps per coarse_tstep
 start_adj = 0.1 # signals seem on avg to start this many seconds late.
-ldpc_iters = 15 # how hard LDPC should work
+ldpc_iters = 25 # how hard LDPC should work
 softboost = 1.0 # log(prob) if #2 symbol has same bit value
 do_subtract = 4 # 0 none, 1 once per unique decode, 2 three per unique, 3 once per decode
 subgap = 1.25  # extra subtract()s this many hz on either side of main bin
@@ -63,6 +63,7 @@ phase_gran = 100 # phase_drift() precision -- pi/phase_gran
 already_o = 1
 already_f = 1
 down200 = False # process1() that down-converts to 200 hz / 32 samples/symbol
+snr_type = 1 # 0 original WSJT-X style, 1 new, "absolute" SNR useful for antenna comparisons
 
 # FT8 modulation and protocol definitions.
 # 1920-point FFT at 12000 samples/second
@@ -1741,7 +1742,7 @@ class FT8:
             bufbuf.append(buf)
         samples = numpy.concatenate(bufbuf)
 
-        # trim trailing zeroes that wsjt-x adds to .wav files.
+        # progressive trim trailing zeroes that wsjt-x adds to .wav files.
         i = len(samples)
         while i > 1000 and numpy.max(samples[i-1:]) == 0.0:
             if numpy.max(samples[i-1000:]) == 0.0:
@@ -1789,7 +1790,7 @@ class FT8:
                                      "gocard expected %d got %d" % (expected, got))
 
                 mx = numpy.max(numpy.abs(buf))
-                if mx > 30000:
+                if mx > 30000: # check if ADC overdriven
                     sys.stderr.write("!")
                 bufbuf.append(buf)
                 nsamples += len(buf)
@@ -2064,6 +2065,9 @@ class FT8:
         # find a clear spot, to help prevent our future replies
         # from interfering with other traffic.
         clear_hz = self.find_clear(samples[adjusted_start:], min_hz, max_hz)
+        
+        # MARCO
+        self.clear_hz = clear_hz
 
         # suppress duplicate message decodes,
         # indexed by message text.
@@ -2152,7 +2156,7 @@ class FT8:
                             ssamples = self.subtract_v5(ssamples, dec, dec.hz() - down_hz)
                         already_msg[dec.msg] = True
                         if self.verbose:
-                            print("P%d %s %4.1f %6.2f %5d %.2f %.0f %s" % (pass_,
+                            print("P%d %s %4.1f %6.2f %5d %.2f %.1f %s" % (pass_,
                                                                           self.band,
                                                                           self.second(dec.decode_time),
                                                                           dec.hz(),
@@ -2265,7 +2269,7 @@ class FT8:
             [ _, _, ss ] = xf.get_complex(hz, offset)
             # ss has 79 8-bucket mini-FFTs.
 
-            dec = self.process2(ss[0:79], hz, offset, pass_)
+            dec = self.process2(ss[0:79], hz, offset, pass_, xf)
                 
             if dec != None:
                 return dec
@@ -2336,7 +2340,7 @@ class FT8:
             return None
         already_fine[key] = True
 
-        dec = self.process2(m[0:79], hz2, offset2, pass_)
+        dec = self.process2(m[0:79], hz2, offset2, pass_, xf)
 
         if dec != None:
             return dec
@@ -2359,6 +2363,7 @@ class FT8:
         b2 = int(max_hz / bin_hz)
         clear_bin = numpy.argmin(occupied2[b1:b2]) + b1
         clear_hz = clear_bin * bin_hz
+
         return clear_hz
 
     # use freq_from_fft to find offset from center of bin.
@@ -2705,6 +2710,7 @@ class FT8:
         # m[symbol][bin]
         [ hz0, offset0, m ] = xf.getall(hzoff, offoff)
 
+
         bin_hz = self.jrate / float(self.jblock)
         min_hz_bin = bin_of(min_hz - hz0)
         max_hz_bin = bin_of(max_hz - hz0) + 8
@@ -2774,26 +2780,55 @@ class FT8:
 
     # m79 is 79 8-bucket mini FFTs, for 8-FSK demodulation.
     # m79[0..79][0..8]
-    def snr(self, m79):
+    def snr_original(self, m79): # Robert's code
         # estimate SNR.
         # mimics wsjt-x code, though the results are not very close.
         sigi = numpy.argmax(m79, axis=1)
-        noisei = numpy.mod(sigi + 4, 8)
+        noisei = numpy.mod(sigi + 4, 7) # was 8, it's 7 in K1JT: farthest tone from maximum
         noises = m79[range(0, 79), noisei]
         noise = numpy.mean(noises * noises) # square yields power
         #if noise == 0.0:
         #    # !!!
         #    return 0
-        sigs = numpy.amax(m79, axis=1) # guess correct tone
-        sig = numpy.mean(sigs * sigs)
+        sigs = numpy.amax(m79, axis=1) # guess correct tone (strongest one)
+        sig = numpy.mean(sigs * sigs) # signal power
         rawsnr = sig / noise
-        rawsnr -= 1 # turn (s+n)/n into s/n
-        if rawsnr < 0.1:
+        #print rawsnr
+        rawsnr -= 1 # turn (s+n)/n into s/n # ???? why minus one? practically irrelevant
+        if rawsnr < 0.1: # avoid casino with log function
             rawsnr = 0.1
         rawsnr /= (2500.0 / 2.7) # 2.7 hz noise b/w -> 2500 hz b/w
         snr = 10 * math.log10(rawsnr)
-        snr += 3
+        snr += 3 # ????empirical offset to be similar to wsjt-x????
         return snr
+
+    # m79 is 79 8-bucket mini FFTs, for 8-FSK demodulation.
+    # m79[0..79][0..8]
+    def snr_is0kyb(self, m79, xf): # MARCO/IS0KYB version
+        # estimate SNR.
+        # mimics wsjt-x code, though the results are not very close.
+        sigi = numpy.argmax(m79, axis=1)
+
+        [ hz0, offset0, m ] = xf.getall(0, 0)
+
+        bin_hz = self.jrate / float(self.jblock)
+
+        clear_hz_bin = bin_of(self.clear_hz)
+        noise_base = m[:,clear_hz_bin]
+        noise_base_mean = numpy.mean(noise_base * noise_base)
+        noise = noise_base_mean
+        
+        sigs = numpy.amax(m79, axis=1) # guess correct tone (strongest one)
+        sig = numpy.mean(sigs * sigs) # signal power
+        rawsnr = sig / noise
+    
+        if rawsnr < 0.1: # avoid casino with log function
+            rawsnr = 0.1
+        rawsnr /= (2500.0 / 2.7) # 2.7 hz noise b/w -> 2500 hz b/w
+        snr = 10 * math.log10(rawsnr)
+        return snr
+
+
 
     ci3 = numpy.array([ 2, 5, 6, 0, 4, 1, 3,
                         2, 5, 6, 0, 4, 1, 3,
@@ -3088,7 +3123,7 @@ class FT8:
     # m79[0..79][0..8]
     # returns None or a Decode.
     # offset is just for dec and debugging.
-    def process2(self, m79complex, hz, offset, pass_):
+    def process2(self, m79complex, hz, offset, pass_, xf):
         if len(m79complex) < 79:
             return None
 
@@ -3113,8 +3148,11 @@ class FT8:
         # hz is usually within 0.02 Hz of correct after this
         # correction (down from 0.2 typically).
         #hz += pd[1]
+        if snr_type == 0:
+           snr = self.snr(abs(m79complex))
+        elif snr_type == 1:
+           snr = self.snr_is0kyb(abs(m79complex), xf)
 
-        snr = self.snr(abs(m79complex))
 
         m79 = abs(m79complex)
         #m79 = self.phase_demodulate(m79complex)
