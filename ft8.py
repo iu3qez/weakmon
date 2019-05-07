@@ -37,8 +37,8 @@ import ctypes
 budget = 10 # max seconds of time for decoding.
 coarse_fstep = 2 # coarse search granularity, per FFT bin
 coarse_tstep = 4 # coarse search granularity, per symbol time
-coarse_tminus = 2.5 # start search this many seconds before 0.5
-coarse_tplus = 2.6 # end search this many seconds after 0.5
+coarse_tminus = 1.5 # start search this many seconds before 0.5
+coarse_tplus = 1.6 # end search this many seconds after 0.5
 coarse_no    = 2 # number of best offsets to use per hz
 fine_no    = 1 # number of best fine offsets to look at
 fine_fstep = 2 # fine-tuning steps per coarse_fstep
@@ -88,6 +88,7 @@ graymap = [ 0, 1, 3, 2, 5, 6, 4, 7 ]
 # the CRC-14 polynomial, from wsjt-x's 0x2757,
 # with leading 1 bit.
 crc14poly = [ 1,   1, 0,   0, 1, 1, 1,   0, 1, 0, 1,   0, 1, 1, 1 ]
+
 
 def crc_c(msg):
     msgtype = ctypes.c_int * len(msg)
@@ -1628,6 +1629,10 @@ class FT8:
         self.hashes22 = { } # non-standard calls indexed by 22-bit hash
         self.hashes12 = { } # non-standard calls indexed by 12-bit hash
 
+        # MARCO snr
+        self.bg_hz = 3000
+        self.noise_power = 10e-12
+
         self.jrate = 12000 // 2 # sample rate for processing (FFT &c)
         self.jblock = 1920 // 2 # samples per symbol
 
@@ -1645,6 +1650,7 @@ class FT8:
         self.start_time = now - gm.tm_sec
 
         make_normal_table()
+
 
     def close(self):
         pass
@@ -1755,7 +1761,12 @@ class FT8:
                 i -= 1
         samples = samples[0:i]
 
+        # MARCO snr
+        self.bg_hz, self.noise_power = self.find_background(samples, 200, 3000)
+
         self.process(samples, 0)
+
+
 
     def opencard(self, desc):
         self.carddesc = desc
@@ -2065,9 +2076,6 @@ class FT8:
         # find a clear spot, to help prevent our future replies
         # from interfering with other traffic.
         clear_hz = self.find_clear(samples[adjusted_start:], min_hz, max_hz)
-        
-        # MARCO
-        self.clear_hz = clear_hz
 
         # suppress duplicate message decodes,
         # indexed by message text.
@@ -2346,6 +2354,26 @@ class FT8:
             return dec
 
         return None
+
+
+    # find the minimum noise hz
+    def find_background(self, samples, min_hz, max_hz):
+        bin_hz = self.jrate / float(self.jblock)/2.
+        from numpy.fft import rfft
+        fft_ = numpy.abs(rfft(samples, self.jblock*2)) # FFT magnitude for the whole signal
+
+        min_hz_bin = int(min_hz / bin_hz)
+        max_hz_bin = int(max_hz / bin_hz)
+        fft_bw = fft_[min_hz_bin:max_hz_bin] # look for the minimum in the wanted bandwidth
+        
+        noise_hz_bin = numpy.argmin(fft_bw) # get the bin of minimum noise
+        noise_hz_bin += min_hz_bin
+
+        noise_power = fft_[noise_hz_bin]**2 # noise power of the quietest hz
+        noise_hz = bin_hz * noise_hz_bin
+
+        return noise_hz, noise_power
+
 
     # find a clear hz in case we want to reply.
     # samples[] starts at nominal start time (0.5 seconds).
@@ -2710,7 +2738,6 @@ class FT8:
         # m[symbol][bin]
         [ hz0, offset0, m ] = xf.getall(hzoff, offoff)
 
-
         bin_hz = self.jrate / float(self.jblock)
         min_hz_bin = bin_of(min_hz - hz0)
         max_hz_bin = bin_of(max_hz - hz0) + 8
@@ -2794,7 +2821,7 @@ class FT8:
         sig = numpy.mean(sigs * sigs) # signal power
         rawsnr = sig / noise
         #print rawsnr
-        rawsnr -= 1 # turn (s+n)/n into s/n # ???? why minus one? practically irrelevant
+        rawsnr -= 1 # turn (s+n)/n into s/n
         if rawsnr < 0.1: # avoid casino with log function
             rawsnr = 0.1
         rawsnr /= (2500.0 / 2.7) # 2.7 hz noise b/w -> 2500 hz b/w
@@ -2804,30 +2831,18 @@ class FT8:
 
     # m79 is 79 8-bucket mini FFTs, for 8-FSK demodulation.
     # m79[0..79][0..8]
-    def snr_is0kyb(self, m79, xf): # MARCO/IS0KYB version
+    def snr_is0kyb(self, m79, hz): # MARCO/IS0KYB version
         # estimate SNR.
-        # mimics wsjt-x code, though the results are not very close.
-        sigi = numpy.argmax(m79, axis=1)
-
-        [ hz0, offset0, m ] = xf.getall(0, 0)
-
-        bin_hz = self.jrate / float(self.jblock)
-
-        clear_hz_bin = bin_of(self.clear_hz)
-        noise_base = m[:,clear_hz_bin]
-        noise_base_mean = numpy.mean(noise_base * noise_base)
-        noise = noise_base_mean
-        
         sigs = numpy.amax(m79, axis=1) # guess correct tone (strongest one)
-        sig = numpy.mean(sigs * sigs) # signal power
-        rawsnr = sig / noise
-    
+        sig = numpy.mean(sigs*sigs) # signal power
+        rawsnr = sig / self.noise_power
+
         if rawsnr < 0.1: # avoid casino with log function
             rawsnr = 0.1
-        rawsnr /= (2500.0 / 2.7) # 2.7 hz noise b/w -> 2500 hz b/w
+        # we don't need to convert noise to some specific bandwidth, leave it to 1 bin = 6.25Hz
+        #rawsnr /= (2500.0 / 2.7) # 2.7 hz noise b/w -> 2500 hz b/w
         snr = 10 * math.log10(rawsnr)
         return snr
-
 
 
     ci3 = numpy.array([ 2, 5, 6, 0, 4, 1, 3,
@@ -3151,7 +3166,7 @@ class FT8:
         if snr_type == 0:
            snr = self.snr_original(abs(m79complex))
         elif snr_type == 1:
-           snr = self.snr_is0kyb(abs(m79complex), xf)
+           snr = self.snr_is0kyb(abs(m79complex), hz)
 
 
         m79 = abs(m79complex)
