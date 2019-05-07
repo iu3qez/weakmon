@@ -1762,7 +1762,7 @@ class FT8:
         samples = samples[0:i]
 
         # MARCO snr
-        self.bg_hz, self.noise_power = self.find_background(samples, 200, 3000)
+        self.bg_hz, self.noise_power = self.find_background(samples, 100, 3200)
 
         self.process(samples, 0)
 
@@ -2361,7 +2361,8 @@ class FT8:
         bin_hz = self.jrate / float(self.jblock)/2.
         from numpy.fft import rfft
         fft_ = numpy.abs(rfft(samples, self.jblock*2)) # FFT magnitude for the whole signal
-
+        #fft_ = weakutil.arfft(samples)
+        print fft_.shape
         min_hz_bin = int(min_hz / bin_hz)
         max_hz_bin = int(max_hz / bin_hz)
         fft_bw = fft_[min_hz_bin:max_hz_bin] # look for the minimum in the wanted bandwidth
@@ -2371,6 +2372,8 @@ class FT8:
 
         noise_power = fft_[noise_hz_bin]**2 # noise power of the quietest hz
         noise_hz = bin_hz * noise_hz_bin
+        
+        print noise_hz, noise_power
 
         return noise_hz, noise_power
 
