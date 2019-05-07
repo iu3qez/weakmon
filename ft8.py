@@ -1762,7 +1762,7 @@ class FT8:
         samples = samples[0:i]
 
         # MARCO snr
-        self.bg_hz, self.noise_power = self.find_background(samples, 100, 3200)
+        self.noise_power = self.find_background(samples, 100, 3000)
 
         self.process(samples, 0)
 
@@ -2361,21 +2361,23 @@ class FT8:
         bin_hz = self.jrate / float(self.jblock)/2.
         from numpy.fft import rfft
         fft_ = numpy.abs(rfft(samples, self.jblock*2)) # FFT magnitude for the whole signal
-        #fft_ = weakutil.arfft(samples)
-        print fft_.shape
+        
         min_hz_bin = int(min_hz / bin_hz)
         max_hz_bin = int(max_hz / bin_hz)
-        fft_bw = fft_[min_hz_bin:max_hz_bin] # look for the minimum in the wanted bandwidth
+        fft_bw = fft_[min_hz_bin:max_hz_bin] # crop the wanted bandwidth
         
-        noise_hz_bin = numpy.argmin(fft_bw) # get the bin of minimum noise
-        noise_hz_bin += min_hz_bin
+        if False:
+            noise_hz_bin = numpy.argmin(fft_bw) # get the bin of minimum noise
+            noise_hz_bin += min_hz_bin
 
-        noise_power = fft_[noise_hz_bin]**2 # noise power of the quietest hz
-        noise_hz = bin_hz * noise_hz_bin
+            #noise_hz_bin = max_hz_bin # let's try it fixed at max_hz
         
-        print noise_hz, noise_power
-
-        return noise_hz, noise_power
+            noise_power = fft_[noise_hz_bin]**2 # noise power of the quietest hz
+            noise_hz = bin_hz * noise_hz_bin
+        
+        noise_power = numpy.percentile(fft_bw, 10)**2 # WSPR-like SNR: a low percentile, almost insensitive of all the signals... should work better than single bin min search
+    
+        return noise_power
 
 
     # find a clear hz in case we want to reply.
