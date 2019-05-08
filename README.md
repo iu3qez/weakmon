@@ -1,17 +1,20 @@
 # PS: IS0KYB fork to implement a new SNR computation method
 I added a new SNR computation function that uses as noise reference not the bins adjacent
 to the signal of interest, but a fixed reference for all. This noise reference
-is found by using the existing function to locate the cleanest frequency
-to transmit within the whole spectrum.
+is found by extracting the 10-th percentile power level in the whole spectrum.
 Motivation: Since I'm experimenting on antenna pattern extraction/comparison,
 I observed an issue when switching to an antenna with much more gain from an omnidirectional one:
-since the received signals are many more, the SNR was often getting worse
-for some signals instead of better. This is perfectly normal in a "FT8 sense" since nearby stuff
-hinders decoding, but I just need to measure how the signal power relative to
+since the received signals are many more and stronger, the computed SNR was often getting worse
+for some signals even if they were stronger. This is perfectly normal in a "FT8 sense"
+since nearby stuff hinders decoding, but I just need to measure how the signal carrier power relative to
 background noise behaves when changing antenna/receive setup.
-The idea assumes that the background noise is quite flat with no spurs
-for all antennas used in each test.
 If you want to know more about this: https://github.com/mcogoni/APET
+
+FT8 (and WSPR) signals could be characterized by two SNR measures:
+1. the standard SNR to convey how much adjacent signals disturb decoding;
+2. a new value intended to evaluate just how stronger the signal carrier wrt the clear band noise.
+This would be similar to the first 2 numbers of the classic RST 599 scale. The third number could
+represent carrier distortion/phase noise etc...
 
 73, marco / IS0KYB
 
