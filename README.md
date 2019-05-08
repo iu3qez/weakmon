@@ -13,7 +13,8 @@ If you want to know more about this: https://github.com/mcogoni/APET
 FT8 (and WSPR) signals could be characterized by two SNR measures:
 1. the standard SNR to convey how much adjacent signals disturb decoding;
 2. a new value intended to evaluate just how stronger the signal carrier wrt the clear band noise.
-This would be similar to the first 2 numbers of the classic RST 599 scale. The third number could
+
+This approach would be similar to the first 2 numbers of the classic RST 599 scale. The third number could
 represent carrier distortion/phase noise etc...
 
 73, marco / IS0KYB
