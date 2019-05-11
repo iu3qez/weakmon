@@ -39,12 +39,12 @@ coarse_fstep = 2 # coarse search granularity, per FFT bin
 coarse_tstep = 4 # coarse search granularity, per symbol time
 coarse_tminus = 1.5 # start search this many seconds before 0.5
 coarse_tplus = 1.6 # end search this many seconds after 0.5
-coarse_no    = 2 # number of best offsets to use per hz
+coarse_no    = 1 # number of best offsets to use per hz
 fine_no    = 1 # number of best fine offsets to look at
 fine_fstep = 2 # fine-tuning steps per coarse_fstep
 fine_tstep = 4 # fine-tuning steps per coarse_tstep
 start_adj = 0.1 # signals seem on avg to start this many seconds late.
-ldpc_iters = 25 # how hard LDPC should work
+ldpc_iters = 15 # how hard LDPC should work
 softboost = 1.0 # log(prob) if #2 symbol has same bit value
 do_subtract = 4 # 0 none, 1 once per unique decode, 2 three per unique, 3 once per decode
 subgap = 1.25  # extra subtract()s this many hz on either side of main bin
@@ -1630,8 +1630,7 @@ class FT8:
         self.hashes12 = { } # non-standard calls indexed by 12-bit hash
 
         # MARCO snr
-        self.bg_hz = 3000
-        self.noise_power = 10e-12
+        self.noise_power = 1.
 
         self.jrate = 12000 // 2 # sample rate for processing (FFT &c)
         self.jblock = 1920 // 2 # samples per symbol
@@ -1761,9 +1760,6 @@ class FT8:
                 i -= 1
         samples = samples[0:i]
 
-        # MARCO snr
-        self.noise_power = self.find_background(samples, 100, 3000)
-
         self.process(samples, 0)
 
 
@@ -1818,6 +1814,7 @@ class FT8:
                     # and second of minute is >= 13.14.
 
                     samples = numpy.concatenate(bufbuf)
+                    #print numpy.max(samples)
 
                     excess = len(samples) - 15*self.cardrate
                     if excess < -1000 or excess > 1000:
@@ -1835,7 +1832,7 @@ class FT8:
                     if last_tmin != None and tmin != last_tmin + 1:
                         self.junklog(samples_time, "gocard jumped minute %d %d" % (last_tmin, tmin))
                     last_tmin = tmin
-
+                                        
                     self.process(samples[i0:], samples_time)
 
                     bufbuf = [ ]
@@ -1902,6 +1899,10 @@ class FT8:
     def process(self, samples, samples_time):
         min_hz = 100 # XXX was 100
         max_hz = 3000 # XXX was 2500
+        
+        # IS0KYB SNR
+        self.noise_power = self.find_background(samples, min_hz, max_hz)
+
 
         if self.restrict_hz != None:
             if self.restrict_hz[0] > min_hz:
@@ -1923,7 +1924,7 @@ class FT8:
         readers = [ ]
         for chi in range(0, nchildren):
             # adjust min_hz and max_hz
-            hzinc = (max_hz - min_hz) / nchildren
+            hzinc = ((max_hz - min_hz) / nchildren)
             hz0 = min_hz + chi*hzinc
             hz1 = hz0 + hzinc
             if chi > 0:
@@ -2163,6 +2164,7 @@ class FT8:
                             ssamples = self.subtract_v5(ssamples, dec, shz)
                             ssamples = self.subtract_v5(ssamples, dec, dec.hz() - down_hz)
                         already_msg[dec.msg] = True
+                        #print already_msg.keys()
                         if self.verbose:
                             print("P%d %s %4.1f %6.2f %5d %.2f %.1f %s" % (pass_,
                                                                           self.band,
@@ -2376,7 +2378,7 @@ class FT8:
             noise_hz = bin_hz * noise_hz_bin
         
         noise_power = numpy.percentile(fft_bw, 10)**2 # WSPR-like SNR: a low percentile, almost insensitive of all the signals... should work better than single bin min search
-    
+        print "------ TIME: %s, Background noise: %f ------" % (time.time(), noise_power) 
         return noise_power
 
 
@@ -2837,15 +2839,14 @@ class FT8:
     # m79 is 79 8-bucket mini FFTs, for 8-FSK demodulation.
     # m79[0..79][0..8]
     def snr_is0kyb(self, m79, hz): # MARCO/IS0KYB version
-        # estimate SNR.
+        # estimate SNR by estimating noise baseline (quiet band noise)
+        # not in the adjacent bins of each signal
         sigs = numpy.amax(m79, axis=1) # guess correct tone (strongest one)
         sig = numpy.mean(sigs*sigs) # signal power
         rawsnr = sig / self.noise_power
-
+        
         if rawsnr < 0.1: # avoid casino with log function
             rawsnr = 0.1
-        # we don't need to convert noise to some specific bandwidth, leave it to 1 bin = 6.25Hz
-        #rawsnr /= (2500.0 / 2.7) # 2.7 hz noise b/w -> 2500 hz b/w
         snr = 10 * math.log10(rawsnr)
         return snr
 
