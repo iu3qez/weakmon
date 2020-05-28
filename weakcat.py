@@ -30,6 +30,10 @@ def open(desc):
         ret = K3(dev)
     if type == "rx340":
         ret = RX340(dev)
+    if type == "orion":
+        ret = Orion(dev)
+    if type == "orion_sub":
+        ret = Orion_sub(dev)
     if type == "8711":
         ret = WJ8711(dev)
     if type == "r75":
@@ -84,7 +88,7 @@ def usage():
     for com in coms:
         sys.stderr.write("  %s\n" % (com))
     sys.stderr.write("radio types for -cat: ")
-    for ty in [ "k3", "rx340", "8711", "sdrip", "sdriq", "r75", "r8500", "r8600", "f8101", "ar5000", "eb200", "sdrplay", "prc138" ]:
+    for ty in [ "k3", "rx340", "orion","orion_sub", "8711", "sdrip", "sdriq", "r75", "r8500", "r8600", "f8101", "ar5000", "eb200", "sdrplay", "prc138" ]:
         sys.stderr.write("%s " % (ty))
     sys.stderr.write("\n")
 
@@ -202,7 +206,68 @@ class RX340(object):
         self.cmd("K1") # preamp off, att off
         self.cmd("M1") # fast AGC
 
-# Watkins Johnson WJ-8711, HF-1000, etc.
+# Ten-Tec Orion
+class Orion(object):
+    def __init__(self, devname):
+        self.port = serial.Serial(devname,
+                                  timeout=2,
+                                  baudrate=57600,
+                                  parity=serial.PARITY_NONE,
+                                  bytesize=serial.EIGHTBITS)
+        
+    def cmd(self, s):
+        self.port.write("*%s\r" % (s))
+        time.sleep(0.05)
+  
+    # send a no-op command and wait for the response.
+    def sync(self):
+        pass
+
+    # set the frequeny in Hz for vfo=0 (A) or vfo=1 (B / sub-receiver).
+    # does not wait.
+    def setf(self, vfo, fr):
+        self.cmd("AF%.6f" % (fr / 1000000.0))
+
+    def set_usb_data(self):
+        self.cmd("RMM0") # USB
+        self.cmd("RMF2000") # b/w 2 khz
+        self.cmd("RMT0") # att off
+        self.cmd("RME0") # preamp off
+        self.cmd("RMAF") # fast AGC
+        self.cmd("KVA  ") # VFOA -> main rec
+        ##self.cmd("KAMN")   
+
+## Ten-Tec Orion Sub receiver
+class Orion_sub(object):
+    def __init__(self, devname):
+        self.port = serial.Serial(devname,
+                                  timeout=2,
+                                  baudrate=57600,
+                                  parity=serial.PARITY_NONE,
+                                  bytesize=serial.EIGHTBITS)
+        
+    def cmd(self, s):
+        self.port.write("*%s\r" % (s))
+        time.sleep(0.05)
+  
+    # send a no-op command and wait for the response.
+    def sync(self):
+        pass
+
+    # set the frequeny in Hz for vfo=0 (A) or vfo=1 (B / sub-receiver).
+    # does not wait.
+    def setf(self, vfo, fr):
+        self.cmd("BF%.6f" % (fr / 1000000.0))
+
+    def set_usb_data(self):
+        self.cmd("RMM0") # USB
+        self.cmd("RMF2000") # b/w 2 khz
+        self.cmd("RMT0") # att off
+        self.cmd("RME0") # preamp off
+        self.cmd("RSAF") # fast AGC
+        self.cmd("KVABA") # VFOA -> main rec and TX, VFOB -> sub rec.
+
+## Watkins Johnson WJ-8711, HF-1000, etc.
 class WJ8711(object):
     def __init__(self, devname):
         self.port = serial.Serial(devname,
