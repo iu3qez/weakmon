@@ -121,7 +121,7 @@ class JT65Mon:
 
         if self.mycall != None and self.mygrid != None:
             # talk to pskreporter.
-            print(("reporting to pskreporter as %s at %s" % (self.mycall, self.mygrid)))
+            print("reporting to pskreporter as %s at %s" % (self.mycall, self.mygrid))
             self.pskr = pskreport.T(self.mycall, self.mygrid, "weakmon 0.2", False)
         else:
             print("not reporting to pskreporter since call/grid not in weak.cfg")
@@ -150,7 +150,7 @@ class JT65Mon:
                     z.append([ ci, m ])
                     d[m.msg] = z
                 else:
-                    print(("LATE: %s %.1f %s" % (self.r[ci].ts(m.decode_time), m.hz(), m.msg)))
+                    print("LATE: %s %.1f %s" % (self.r[ci].ts(m.decode_time), m.hz(), m.msg))
             x = self.bandinfo.get(bands[ci], 0)
             self.bandinfo[bands[ci]] = 0.5 * x + 0.5 * bandcount1
 

@@ -394,7 +394,7 @@ class WWV:
                 fr = d.cardtime - int(d.cardtime)
                 frs = "%.3f" % (fr)
                 frs = frs[1:] # drop leading zero
-                print(("%02d:%02d:%02d%s %s %d" % (ts.tm_hour, ts.tm_min, ts.tm_sec, frs, d.s(), votes)))
+                print("%02d:%02d:%02d%s %s %d" % (ts.tm_hour, ts.tm_min, ts.tm_sec, frs, d.s(), votes))
             sys.stdout.flush()
 
     # s is strength of tone, self.lorate samples per second,
@@ -412,7 +412,7 @@ class WWV:
             d = self.decode(bits)
             d.strengths = strengths
             if False and d.year == 2017 and d.day_of_year == 41:
-                print((d.s()))
+                print(d.s())
                 print(strengths)
                 sys.exit(1)
 
@@ -639,7 +639,7 @@ def onebench(filename, year0, yearday0, hour0, minute0, minutes, verbose):
         secgood.append(ngood)
 
     if verbose:
-        print(("%s score %d of %d" % (filename, numpy.max(secgood), minutes)))
+        print("%s score %d of %d" % (filename, numpy.max(secgood), minutes))
     return numpy.max(secgood)
 
 def optimize():
@@ -707,7 +707,7 @@ def main():
         total += onebench("wwvx8.wav", 2017, 43, 22, 15, 72, True)
         total += onebench("wwvx9.wav", 2017, 43, 23, 33, 51, True)
         total += onebench("wwvx10.wav", 2017, 44, 9, 19, 54, True)
-        print(("%d total" % (total)))
+        print("%d total" % (total))
         sys.exit(0)
 
     parser = weakargs.stdparse('Decode WWV.')

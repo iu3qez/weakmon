@@ -443,7 +443,7 @@ class WSPR:
   def got_msg(self, dec):
       if self.verbose:
           drift = dec.hza[1] - dec.hz()
-          print(("%6.1f %.1f %.1f %d %s" % (dec.hz(), dec.dt, drift, dec.snr, dec.msg)))
+          print("%6.1f %.1f %.1f %d %s" % (dec.hz(), dec.dt, drift, dec.snr, dec.msg))
       dec.decode_time = time.time()
       self.msgs_lock.acquire()
       self.msgs.append(dec)
@@ -561,9 +561,9 @@ class WSPR:
     
             if False:
                 if dec != None:
-                    print(("%.1f %d %.1f %.1f %s -- %s" % (hz, phase, drift, numpy.mean(hza), rr, dec.msg)))
+                    print("%.1f %d %.1f %.1f %s -- %s" % (hz, phase, drift, numpy.mean(hza), rr, dec.msg))
                 else:
-                    print(("%.1f %d %.1f %.1f %s" % (hz, phase, drift, numpy.mean(hza), rr)))
+                    print("%.1f %d %.1f %.1f %s" % (hz, phase, drift, numpy.mean(hza), rr))
     
             if dec != None:
                 dec.minute = samples_minute
@@ -715,7 +715,7 @@ class WSPR:
           x0abs = abs(nstart - x0start)
           #print("%.1f %d: %d %d" % (hz, nstart, x0start, x0abs))
           if abs(xa[1][0] - nstart) < x0abs:
-              print(("%.1f %d: %d %d -- %d" % (hz, nstart, x0start, x0abs, xa[1][0])))
+              print("%.1f %d: %d %d -- %d" % (hz, nstart, x0start, x0abs, xa[1][0]))
           mo = max(mo, x0abs)
           sumabs += x0abs
           sum += x0start - nstart
@@ -731,7 +731,7 @@ class WSPR:
       # jul  8 2017 -- max diff 32, avg abs diff 15, avg diff 0, avg CPU 0.114
       #                but this one uses FFTCache...
       # jul  9 2017 -- max diff 32, avg abs diff 17, avg diff -2, avg CPU 0.006
-      print(("max diff %d, avg abs diff %d, avg diff %d, avg CPU %.3f" % (mo, sumabs/n, sum/n, cpu / n)))
+      print("max diff %d, avg abs diff %d, avg diff %d, avg CPU %.3f" % (mo, sumabs/n, sum/n, cpu / n))
 
   # a signal starts at roughly offset=start,
   # to within self.jblock/coarse_steps.
@@ -1400,7 +1400,7 @@ def benchmark(wsjtfile, verbose):
         line = re.sub(r'[\r\n]', '', line)
         m = re.match(r'^([0-9]{4}) +.*$', line)
         if m == None:
-            print(("oops: " + line))
+            print("oops: " + line)
             continue
         hhmm = m.group(1)
         if not hhmm in minutes:
@@ -1431,7 +1431,7 @@ def benchmark1(dir, bfiles, verbose):
         if not bf[0]: # only the short list
             continue
         if verbose:
-            print((bf[1]))
+            print(bf[1])
         filename = dir + "/" + bf[1]
         r = WSPR()
         r.verbose = False
@@ -1473,11 +1473,11 @@ def benchmark1(dir, bfiles, verbose):
                             ph += "0"
                         if found.phase1:
                             ph += "1"
-                        print(("yes %4.0f %s (%.1f %.1f) %s %s" % (float(whz), wa[2], found.hz(), found.dt, ph, wmsg)))
+                        print("yes %4.0f %s (%.1f %.1f) %s %s" % (float(whz), wa[2], found.hz(), found.dt, ph, wmsg))
                 else:
                     any_no = True
                     if verbose:
-                        print(("no  %4.0f %s %s" % (float(whz), wa[2], wmsg)))
+                        print("no  %4.0f %s %s" % (float(whz), wa[2], wmsg))
                 sys.stdout.flush()
         for dec in all:
             if not (dec.msg in got):
@@ -1497,9 +1497,9 @@ def benchmark1(dir, bfiles, verbose):
                         sys.stdout.write("OK ")
                     else:
                         sys.stdout.write("BAD ")
-                    print(("EXTRA: %6.1f %s" % (dec.hz(), dec.msg)))
+                    print("EXTRA: %6.1f %s" % (dec.hz(), dec.msg))
     if verbose:
-        print(("score %d of %d -- %d extra" % (score, wanted, extra)))
+        print("score %d of %d -- %d extra" % (score, wanted, extra))
     return [ score, wanted, extra ]
 
 vars = [
@@ -1569,7 +1569,7 @@ if False:
     ]
     x = r.process2(bits, [1.0]*len(bits))
     # expecting " K1ABC FN42 37"
-    print((x[1]))
+    print(x[1])
     sys.exit(0)
 
 filename = None

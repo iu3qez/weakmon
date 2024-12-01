@@ -197,7 +197,7 @@ class SDRIP:
         elif self.ipaddr == "192.168.3.131":
             data += x32(80000000 + 525)
         else:
-            print(("sdrip.py: unknown IP address %s for calibration" % (self.ipaddr)))
+            print("sdrip.py: unknown IP address %s for calibration" % (self.ipaddr))
             # data += x32(80000000 + 0)
             data = None
         if data != None:
@@ -207,7 +207,7 @@ class SDRIP:
     # factory set to 80000000
     x = self.getitem(0x00B0)
     cal = y32(x[1:5])
-    print(("sdrip %s cal: %s" % (self.ipaddr, cal)))
+    print("sdrip %s cal: %s" % (self.ipaddr, cal))
 
   # read the UDP socket from the SDR-IP.
   def reader1(self):
