@@ -405,7 +405,7 @@ class APRSRecv:
 
     if len(bytes) < 18 or len(bytes) > 500:
       if debug:
-        print(("bad len %d" % (len(bytes))))
+        print("bad len %d" % (len(bytes)))
       return 0
 
     crc = crc16(bytes[0:-2])
@@ -608,7 +608,7 @@ def benchmark(wavname, verbose):
   ar.callback = cb
   ar.gofile(wavname)
   if verbose:
-    print(("%d %s" % (wins, wavname)))
+    print("%d %s" % (wins, wavname))
   return wins
 
 def optimize(wavname):
@@ -651,7 +651,7 @@ def cb(fate, msg, start, space_to_mark, snr):
     # fate=1 -- CRC failed but syntax look OK.
     # fate=2 -- CRC is correct.
     if fate >= 1:
-        print(("%d %d %.1f %.1f %s" % (fate, start, space_to_mark, snr, msg)))
+        print("%d %d %.1f %.1f %s" % (fate, start, space_to_mark, snr, msg))
 
 def usage():
   sys.stderr.write("Usage: aprsrecv.py [file...] [-sound]\n")

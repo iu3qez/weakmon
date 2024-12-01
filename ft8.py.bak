@@ -639,7 +639,7 @@ def ldpc_decode_python(codeword):
             a = numpy.ones(83)
             for ii in range(0, 7):
                 if ii != i:
-                    x1 = numpy.tanh(m[list(range(0, 83)), nmx[:,ii]-1] / 2.0)
+                    x1 = numpy.tanh(m[range(0, 83), nmx[:,ii]-1] / 2.0)
                     x2 = numpy.where(numpy.greater(nmx[:,ii], 0.0), x1, 1.0)
                     a = a * x2
             # avoid divide by zero, i.e. a[i]==1.0
@@ -648,16 +648,16 @@ def ldpc_decode_python(codeword):
             c = numpy.log((b + 1.0) / (1.0 - b))
             # have assign be no-op when nmx[a,b] == 0
             d = numpy.where(numpy.equal(nmx[:,i], 0),
-                            e[list(range(0,83)), nmx[:,i]-1],
+                            e[range(0,83), nmx[:,i]-1],
                             c)
-            e[list(range(0,83)), nmx[:,i]-1] = d
+            e[range(0,83), nmx[:,i]-1] = d
 
         # decide if we are done -- compute the corrected codeword,
         # see if the parity check succeeds.
         # sum the three log likelihoods contributing to each codeword bit.
-        e0 = e[mnx[:,0]-1, list(range(0,174))]
-        e1 = e[mnx[:,1]-1, list(range(0,174))]
-        e2 = e[mnx[:,2]-1, list(range(0,174))]
+        e0 = e[mnx[:,0]-1, range(0,174)]
+        e1 = e[mnx[:,1]-1, range(0,174)]
+        e2 = e[mnx[:,2]-1, range(0,174)]
         ll = codeword + e0 + e1 + e2
         # log likelihood > 0 => bit=0.
         cw = numpy.select( [ ll < 0 ], [ numpy.ones(174, dtype=numpy.int32) ])
@@ -673,15 +673,15 @@ def ldpc_decode_python(codeword):
             # for each column in Mn.
             ll = codeword
             if j != 0:
-                e0 = e[mnx[:,0]-1, list(range(0,174))]
+                e0 = e[mnx[:,0]-1, range(0,174)]
                 ll = ll + e0
             if j != 1:
-                e1 = e[mnx[:,1]-1, list(range(0,174))]
+                e1 = e[mnx[:,1]-1, range(0,174)]
                 ll = ll + e1
             if j != 2:
-                e2 = e[mnx[:,2]-1, list(range(0,174))]
+                e2 = e[mnx[:,2]-1, range(0,174)]
                 ll = ll + e2
-            m[mnx[:,j]-1, list(range(0,174))] = ll
+            m[mnx[:,j]-1, range(0,174)] = ll
 
 
     # could not decode.
@@ -824,9 +824,9 @@ def ldpc_test():
         if numpy.array_equal(a91, d91):
             ok += 1
 
-    print(("ldpc_iters %d, success %.2f, %.6f sec/call" % (ldpc_iters,
+    print("ldpc_iters %d, success %.2f, %.6f sec/call" % (ldpc_iters,
                                                           ok / float(niters),
-                                                          tt / niters)))
+                                                          tt / niters))
 
     # success 0.88
     # 0.019423 per call
@@ -984,7 +984,7 @@ def test_gauss_jordan():
     cols = 8
     a = numpy.random.randint(0, 2, (rows, cols))
 
-    which = list(range(0, a.shape[0]))
+    which = range(0, a.shape[0])
     which = numpy.array(which, dtype=numpy.int32)
     pwhich = numpy.copy(which)
 
@@ -1119,7 +1119,7 @@ def osd_test_gen_1(nbad):
 
     # disturb n bits
     if True:
-        bb = numpy.array(list(range(0, 174)), dtype=numpy.int32)
+        bb = numpy.array(range(0, 174), dtype=numpy.int32)
         numpy.random.shuffle(bb)
         for i in range(0, nbad):
             #ll174[bb[i]] *= -1
@@ -1158,9 +1158,9 @@ def osd_test_1():
             if ok:
                 nok += 1
         t1 = time.time()
-        print(("ldpc_decode iters=%d ok=%.2f, %.3f sec" % (ldpc_iters,
+        print("ldpc_decode iters=%d ok=%.2f, %.3f sec" % (ldpc_iters,
                                                           nok / float(iters),
-                                                          (t1-t0)/iters)))
+                                                          (t1-t0)/iters))
     ldpc_iters = oli
 
     for order in [ 0, 1, 2 ]:
@@ -1172,8 +1172,8 @@ def osd_test_1():
             if ok:
                 nok += 1
         t1 = time.time()
-        print(("n=%d order=%d ok=%.02f, %.3f sec" % (nbad, order, nok/float(iters),
-                                                    (t1-t0)/iters)))
+        print("n=%d order=%d ok=%.02f, %.3f sec" % (nbad, order, nok/float(iters),
+                                                    (t1-t0)/iters))
 
     # ldpc_decode ok=0.03, 0.005 sec
     # n=70 order=0 ok=0.43, 0.182 sec
@@ -1282,7 +1282,7 @@ def gray_common(b174, mm):
     return a174
 
 if False:
-    print("testing gray_code")
+    print "testing gray_code"
     b174 = numpy.random.randint(0, 2, 174)
     a174 = gray_code(b174)
     bb174 = un_gray_code(a174)
@@ -1295,9 +1295,9 @@ if False:
 # MSB, most-significant bit first.
 # works with bignums.
 def un(a):
-    x = int(0)
+    x = long(0)
     for i, b in enumerate(reversed(a)):
-        x = x + (int(b) << i)
+        x = x + (long(b) << i)
     return x
 
 # turn an integer into an array of bits.
@@ -1334,14 +1334,14 @@ def ihashcall(call, m):
     while len(call) < 11:
         call = call + " "
 
-    x = int(0)
+    x = long(0)
     for c in call[0:11]:
         j = chars.find(c)
         x = 38*x + j
-        x = x & ((int(1) << 64) - 1)
-    x = x & ((int(1) << 64) - 1)
-    x = x * int(47055833459)
-    x = x & ((int(1) << 64) - 1)
+        x = x & ((long(1) << 64) - 1)
+    x = x & ((long(1) << 64) - 1)
+    x = x * long(47055833459)
+    x = x & ((long(1) << 64) - 1)
     x = x >> (64 - m)
     return x
 
@@ -2044,7 +2044,7 @@ class FT8:
             samples = scipy.signal.lfilter(filter[0], filter[1], samples)
             samples = samples[::2]
         elif self.cardrate != self.jrate:
-            print(("cannot handle cardrate %d" % (self.cardrate)))
+            print("cannot handle cardrate %d" % (self.cardrate))
             assert False
 
         # nominal signal start time is half a second into samples[].
@@ -2166,14 +2166,14 @@ class FT8:
                         already_msg[dec.msg] = True
                         #print already_msg.keys()
                         if self.verbose:
-                            print(("P%d %s %4.1f %6.2f %5d %.2f %.1f %s" % (pass_,
+                            print("P%d %s %4.1f %6.2f %5d %.2f %.1f %s" % (pass_,
                                                                           self.band,
                                                                           self.second(dec.decode_time),
                                                                           dec.hz(),
                                                                           dec.start,
                                                                           dec.dt,
                                                                           dec.snr,
-                                                                          dec.msg)))
+                                                                          dec.msg))
                             sys.stdout.flush()
                         thunk(dec)
 
@@ -2378,7 +2378,7 @@ class FT8:
             noise_hz = bin_hz * noise_hz_bin
         
         noise_power = numpy.percentile(fft_bw, 10)**2 # WSPR-like SNR: a low percentile, almost insensitive of all the signals... should work better than single bin min search
-        print("------ TIME: %s, Background noise: %f ------" % (time.time(), noise_power)) 
+        print "------ TIME: %s, Background noise: %f ------" % (time.time(), noise_power) 
         return noise_power
 
 
@@ -2819,7 +2819,7 @@ class FT8:
         # mimics wsjt-x code, though the results are not very close.
         sigi = numpy.argmax(m79, axis=1)
         noisei = numpy.mod(sigi + 4, 7) # was 8, it's 7 in K1JT: farthest tone from maximum
-        noises = m79[list(range(0, 79)), noisei]
+        noises = m79[range(0, 79), noisei]
         noise = numpy.mean(noises * noises) # square yields power
         #if noise == 0.0:
         #    # !!!
@@ -2875,7 +2875,7 @@ class FT8:
             # just look at Costas arrays, where we know
             # which symbols are correct.
             cs = numpy.concatenate( [ m79[0:0+7], m79[36:36+7], m79[72:72+7] ] )
-            winners = cs[list(range(0,21)),self.ci3]
+            winners = cs[range(0,21),self.ci3]
             losers = m79
 
         if False:
@@ -3041,11 +3041,11 @@ class FT8:
             # treat each of the three bits in a symbol separately.
 
             e0 = numpy.maximum(
-                   numpy.maximum(m58[list(range(0,n)),v0[0]], m58[list(range(0,n)),v0[1]]),
-                   numpy.maximum(m58[list(range(0,n)),v0[2]], m58[list(range(0,n)),v0[3]]))
+                   numpy.maximum(m58[range(0,n),v0[0]], m58[range(0,n),v0[1]]),
+                   numpy.maximum(m58[range(0,n),v0[2]], m58[range(0,n),v0[3]]))
             e1 = numpy.maximum(
-                   numpy.maximum(m58[list(range(0,n)),v1[0]], m58[list(range(0,n)),v1[1]]),
-                   numpy.maximum(m58[list(range(0,n)),v1[2]], m58[list(range(0,n)),v1[3]]))
+                   numpy.maximum(m58[range(0,n),v1[0]], m58[range(0,n),v1[1]]),
+                   numpy.maximum(m58[range(0,n),v1[2]], m58[range(0,n),v1[3]]))
 
             # start with measured a-priori bit probabilities.
             # XXX need to re-measure for new FT8.
@@ -3266,7 +3266,7 @@ class FT8:
                     dec.hint = hint
                     if "CQ" in self.hints1:
                         dec.hint = "CQ " + dec.hint
-                    print("hints2 %s on %s -> %s" % (dec.hint, self.band, dec.msg))
+                    print "hints2 %s on %s -> %s" % (dec.hint, self.band, dec.msg)
                     sys.stdout.flush()
                     return dec
 
@@ -3691,7 +3691,7 @@ class FT8Send:
             (pg, ir) = self.packgrid(g, 1)
             upg = r.unpackgrid(pg, ir, 1)
             if g != upg.strip():
-                print(("packgrid oops, wanted %s, got %s" % (g, upg.strip())))
+                print("packgrid oops, wanted %s, got %s" % (g, upg.strip()))
         for call in [ "AB1HL", "K1JT", "M0TRJ", "KK4BMV", "2E0CIN", "HF9D",
                       "6Y4K", "D4Z", "8P6DR", "ZS2I", "3D2RJ",
                       "WB3D", "S59GCD", "T77C", "4Z5AD", "A45XR", "OJ0V",
@@ -3700,23 +3700,23 @@ class FT8Send:
             pc = self.packcall(call)
             upc = r.unpackcall(pc)
             if call != upc.strip():
-                print(("packcall oops %s %d %s" % (call, pc, upc)))
+                print("packcall oops %s %d %s" % (call, pc, upc))
         for msg in [ "AB1HL K1JT FN42", "CQ DX CO3HMR EL82", "KD6HWI PY7VI R-12",
                      "KD5RBW TU 73", "CQ N5OSK EM25", "PD9BG KG7EZ RRR",
                      "W1JET KE0HQZ 73", "WB3D OM4SX -16", "WA3ETR IZ2QGB RR73",
                      "BG THX JOE 73"]:
             pm = self.pack(msg, 1)
             if len(pm) == 0:
-                print(("pack() failed for %s" % (msg)))
+                print("pack() failed for %s" % (msg))
                 continue
             dec = r.unpack(pm)
             if dec == None:
-                print(("unpack() failed for %s" % (msg)))
+                print("unpack() failed for %s" % (msg))
                 continue
             upm = dec.msg
             upm = re.sub(r'  *', ' ', upm)
             if msg != upm.strip():
-                print(("pack oops %s %s %s" % (msg, pm, upm)))
+                print("pack oops %s %s %s" % (msg, pm, upm))
 
     # bits77 is the result of pack().
     # returns an array of 79 symbols 0..8, ready for FSK.
@@ -4014,7 +4014,7 @@ def benchmark(wsjtfile, verbose):
         line = re.sub(r'[\r\n]', '', line)
         m = re.match(r'^([0-9]{6}) +.*$', line)
         if m == None:
-            print(("oops: " + line))
+            print("oops: " + line)
             continue
         hhmmss = m.group(1)
         if not hhmmss in minutes:
@@ -4050,7 +4050,7 @@ def benchmark1(dir, bfiles, verbose):
         if not bf[0]: # only the short list
             continue
         if verbose:
-            print((bf[1]))
+            print(bf[1])
         filename = dir + "/" + bf[1]
         r = FT8()
         r.verbose = False
@@ -4139,24 +4139,24 @@ def benchmark1(dir, bfiles, verbose):
                 if found != None:
                     jtscore += 1
                     if verbose:
-                        print(("yes %4.0f %s (%.1f %.1f) %s" % (float(whz), wa[2], found.hz(), found.dt, wmsg)))
+                        print("yes %4.0f %s (%.1f %.1f) %s" % (float(whz), wa[2], found.hz(), found.dt, wmsg))
                 else:
                     any_no = True
                     if verbose:
-                        print(("no  %4.0f %s %s" % (float(whz), wa[2], wmsg)))
+                        print("no  %4.0f %s %s" % (float(whz), wa[2], wmsg))
                 sys.stdout.flush()
         extras = [ ]
         for dec in all:
             if not (dec.msg in got) and not (dec.msg in extras):
                 extras.append(dec.msg)
                 if verbose:
-                    print(("EXTRA: %6.1f %s" % (dec.hz(), dec.msg)))
+                    print("EXTRA: %6.1f %s" % (dec.hz(), dec.msg))
         if False and any_no:
             # emit lines only for files in which we
             # some decodes that wsjt-x got.
-            print((bf[2]))
+            print(bf[2])
     if verbose:
-        print(("score %d (%d of %d)" % (crcok, jtscore, jtwanted)))
+        print("score %d (%d of %d)" % (crcok, jtscore, jtwanted))
     return [ crcok, jtscore, jtwanted ]
 
 vars = [

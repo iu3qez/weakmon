@@ -413,18 +413,18 @@ class F8101(object):
     def printinfo(self):
         a = self.cmd([ 0x03 ], b"")
         hz = self.parse_freq(a)
-        print(("freq %d" % (hz)))
+        print("freq %d" % (hz))
 
         a = self.cmd([ 0x1A, 0x34 ], b"")
         mode = a[1] + 256*a[0]
-        print(("mode %04x" % (mode))) 
+        print("mode %04x" % (mode)) 
 
         a = self.cmd([ 0x1A, 0x37 ], b"")
         x = a[1] + 256*a[0]
-        print(("TX status %04x" % (x))) 
+        print("TX status %04x" % (x)) 
 
         a = self.cmd([ 0x1C, 0x00 ], b"")
-        print(("ptt output %02x" % (a[0]))) # 00 RX, 01 PTT TX
+        print("ptt output %02x" % (a[0])) # 00 RX, 01 PTT TX
 
         if False:
             a = self.cmd([ 0x1C, 0x00 ], b"\x01") # transmit!
@@ -432,7 +432,7 @@ class F8101(object):
             a = self.cmd([ 0x1C, 0x00 ], b"\x00") # receive
 
         a = self.cmd([ 0x1C, 0x01 ], b"")
-        print(("tuner %02x" % (a[0])))  # 00 on, 01 through
+        print("tuner %02x" % (a[0]))  # 00 on, 01 through
 
         cc = [
             [ "preamp", 0x03, 0x05 ],
@@ -452,9 +452,9 @@ class F8101(object):
             a = self.cmd([ 0x1A, 0x05, c[1], c[2] ], b"")
             if len(a) == 2:
                 x = a[1] + 256*a[0]
-                print(("%s %04x" % (c[0], x)))
+                print("%s %04x" % (c[0], x))
             else:
-                print(("%s ???" % (c[0])))
+                print("%s ???" % (c[0]))
 
         #self.cmd([ 0x07, 0x00 ], b"") # Set VFO A -- works
         #self.cmd([ 0x03 ], b"") # read operating freq -- works
@@ -480,7 +480,7 @@ class F8101(object):
     def drain(self):
         n = self.port.in_waiting
         if n != 0:
-            print(("draining %d" % (n)))
+            print("draining %d" % (n))
         self.port.read(size=n)
         
     # send a command, wait for the reply,
@@ -550,7 +550,7 @@ class F8101(object):
         if False:
             a = self.cmd([ 0x1A, 0x37 ], b"")
             x = a[1] + 256*a[0]
-            print(("TX status %04x" % (x))) 
+            print("TX status %04x" % (x)) 
 
 
     def rx(self):
@@ -681,7 +681,7 @@ class PRC138(object):
         [ rx, tx ] = self.get_fr()
         mode = self.get_mode()
         bw = self.get_bw()
-        print(("prc138 sync %d %d %s %.1f" % (rx, tx, mode, bw)))
+        print("prc138 sync %d %d %s %.1f" % (rx, tx, mode, bw))
 
     def get_fr(self):
         self.port.write("FR\r")

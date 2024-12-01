@@ -481,7 +481,7 @@ def test_iq2usb():
         t0 = time.time()
         x = one_test_iq2usb(rate, hz, n)
         t1 = time.time()
-        print(("%d %d %d: %.3f %.3f" % (rate, hz, n, x, t1 - t0)))
+        print("%d %d %d: %.3f %.3f" % (rate, hz, n, x, t1 - t0))
 
 # "scipy" -- scipy.signal.resample(), the default
 # "interp" -- numpy.interp()
@@ -514,22 +514,22 @@ def resample(buf, from_rate, to_rate):
 
     if False:
         if from_rate == to_rate * 10:
-            print("resample/10", from_rate, to_rate)
+            print "resample/10", from_rate, to_rate
             buf = buf[0::10]
             return buf
 
         if from_rate == to_rate * 20:
-            print("resample/20", from_rate, to_rate)
+            print "resample/20", from_rate, to_rate
             buf = buf[0::20]
             return buf
 
         if from_rate == to_rate * 30:
-            print("resample/30", from_rate, to_rate)
+            print "resample/30", from_rate, to_rate
             buf = buf[0::30]
             return buf
 
         if from_rate == to_rate * 40:
-            print("resample/40", from_rate, to_rate)
+            print "resample/40", from_rate, to_rate
             buf = buf[0::40]
             return buf
 
@@ -725,7 +725,7 @@ def test_resampler():
 
         resample_interp = False
         x = one_test_resampler(r1, r2)
-        print(("%d %d False: %.3f" % (r1, r2, x)))
+        print("%d %d False: %.3f" % (r1, r2, x))
 
         #resample_interp = True
         #x = one_test_resampler(r1, r2)
@@ -1062,7 +1062,7 @@ def shift_bench():
     for iter in range(0, iters):
         junk = freq_shift(samples, -1190, 1.0 / rate)
     t1 = time.time()
-    print(("%f" % ((t1 - t0) / iters)))
+    print("%f" % ((t1 - t0) / iters))
 
 # how long do filters take?
 # order 5 :  0.0014 seconds
@@ -1082,7 +1082,7 @@ def filter_bench():
             f = cheby_highpass(1300, rate)
             junk = scipy.signal.lfilter(f[0], f[1], samples)
         t1 = time.time()
-        print(("order %d : %f" % (order, (t1 - t0) / iters)))
+        print("order %d : %f" % (order, (t1 - t0) / iters))
 
 # for testing, plot filter response.
 def plot_filter():
