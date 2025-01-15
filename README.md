@@ -1,3 +1,5 @@
+# IU3QEZ, Jan 2025: Now works on Python 3.10
+
 # PS: IS0KYB fork to implement a new SNR computation method
 I added a new SNR computation function that uses as noise reference not the bins adjacent
 to the signal of interest, but a fixed reference for all. This noise reference
