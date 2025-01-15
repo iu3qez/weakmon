@@ -316,7 +316,7 @@ fff_cached_windows = { }
 def init_freq_from_fft(n):
     n = int(n)
     if not n in fff_cached_windows:
-        fff_cached_windows[n] = scipy.signal.blackmanharris(n)
+        fff_cached_windows[n] = scipy.signal.windows.blackmanharris(n)
 
 # https://gist.github.com/endolith/255291
 def freq_from_fft(sig, rate, minf, maxf):

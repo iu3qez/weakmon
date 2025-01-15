@@ -3324,7 +3324,7 @@ class FT8:
             ci3 = x / 27
             x %= 27
             ci4 = x
-            aaaa = c4[ci1] + c4[ci2] + c4[ci3] + c4[ci4]
+            aaaa = c4[int(ci1)] + c4[int(ci2)] + c4[int(ci3)] + c4[int(ci4)]
             while len(aaaa) > 0 and aaaa[0] == " ":
                 aaaa = aaaa[1:]
             return "CQ_" + aaaa
